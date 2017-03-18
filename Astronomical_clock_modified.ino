@@ -7,18 +7,20 @@
 
 /******************* CONSTANTS AND VARIABLES *******************
 ****************************************************************/
-#include <time.h>  
+//#include <Time.h>  
 #include <TimeLord.h>
 #include <Wire.h>       // Needed for I2C communication
-#include <DS3231.h>  // a basic DS1307 library that returns time as a time_t
-DS3231  rtc(SDA, SCL);                // Init the DS3231 using the hardware interface
-Time  t;   
+//#include <DS3231.h>  // a basic DS1307 library that returns time as a time_t
+//DS3231  rtc(SDA, SCL);                // Init the DS3231 using the hardware interface
+#include <Rtc_Pcf8563.h>
+Rtc_Pcf8563 rtc;
+//Time  t;   
 
 const int TIMEZONE = -5; //PST
 const float LATITUDE = 45.50, LONGITUDE = -73.56; // set your position here
 
 TimeLord myLord; // TimeLord Object, Global variable
-byte sunTime[]  = {0, 0, 0, 30, 12, 16}; // 17 Oct 2013
+byte sunTime[]  = {0, 0, 0, 30, 12, 16}; // 17 Oct 2013 // POURQUOI ?
 int mSunrise, mSunset; //sunrise and sunset expressed as minute of day (0-1439)
 // Need to adapt this according to the actual physical connections:
 
@@ -39,35 +41,70 @@ int minuteCoucher;
 ****************************************************************/
 void setup()  {
   Serial.begin(9600);
-  rtc.begin();
+  // rtc.begin();
+    /* TimeLord Object Initialization */
+  myLord.TimeZone(TIMEZONE * 60);
+  myLord.Position(LATITUDE, LONGITUDE);
+  myLord.DstRules(3,2,11,1,60); // DST Rules for USA
 }
 
-/******************** MAIN LOOP STARTS HERE  *******************
-****************************************************************/
-void loop(){   
+/*
+void getDateAndTimeDS3231(){
   t = rtc.getTime();
   yr = t.year-2000;
   mt = t.mon;
   dy = t.date;
   hr = t.hour;
   mn = t.min;
-  /* TimeLord Object Initialization */
-  myLord.TimeZone(TIMEZONE * 60);
-  myLord.Position(LATITUDE, LONGITUDE);
-  myLord.DstRules(3,2,11,1,60); // DST Rules for USA
-      sunTime[3] = dy; // Uses the Time library to give Timelord the current date
-      sunTime[4] = mt;
-            sunTime[5] = yr;
-      myLord.SunRise(sunTime); // Computes Sun Rise. Prints:
-      mSunrise = sunTime[2] * 60 + sunTime[1];
-          DisplaySunRise(sunTime);
-      /* Sunset: */
-      sunTime[3] = dy; // Uses the Time library to give Timelord the current date
-      sunTime[4] = mt;
-            sunTime[5] = yr;
-      myLord.SunSet(sunTime); // Computes Sun Set. Prints:
-      mSunset = sunTime[2] * 60 + sunTime[1];
-          DisplaySunSet(sunTime);
+}
+*/
+
+void getDateAndTimePcf8563(){
+  String date = rtc.formatDate(RTCC_DATE_ASIA);
+  yr = date.substring(0,4).toInt();
+  mt = date.substring(5,7).toInt();
+  dy = date.substring(8,10).toInt();
+  //Serial.println(date);
+
+  String time = rtc.formatTime();
+  hr = time.substring(0,2).toInt();
+  mn = time.substring(3,5).toInt();
+  //Serial.println(time);
+
+}
+
+void ajouteHeure(int * const heure, int * const minut){
+    *heure += 1;
+    *minut = 60 - *minut;
+}
+
+void enleveHeure(int * const heure, int * const minut){
+    *heure -= 1;
+    *minut += 60;
+}
+
+
+/******************** MAIN LOOP STARTS HERE  *******************
+****************************************************************/
+void loop(){
+  //getDateAndTimeDS3231();
+  getDateAndTimePcf8563();
+  
+  sunTime[3] = dy; // Uses the Time library to give Timelord the current date
+  sunTime[4] = mt;
+  sunTime[5] = yr;
+  
+  myLord.SunRise(sunTime); // Computes Sun Rise. Prints:
+  mSunrise = sunTime[2] * 60 + sunTime[1];
+  DisplaySunRise(sunTime);
+  
+  /* Sunset: */
+  sunTime[3] = dy; // Uses the Time library to give Timelord the current date
+  sunTime[4] = mt;
+  sunTime[5] = yr;
+  myLord.SunSet(sunTime); // Computes Sun Set. Prints:
+  mSunset = sunTime[2] * 60 + sunTime[1];
+  DisplaySunSet(sunTime);
 
 //assignation de l'heure du réveil et du coucher
   heureReveil = HSR;
@@ -76,13 +113,11 @@ void loop(){
   minuteCoucher = MSS + SSmod;
   
 //Convertir décimales en hr
-if ((minuteReveil > 59) && (minuteReveil < 120)){
-    heureReveil += 1;
-    minuteReveil = minuteReveil - 60;
+  if ((minuteReveil > 59) && (minuteReveil < 120)){
+    ajouteHeure(&heureReveil, &minuteReveil);
   }
   else if ((minuteReveil < 0) && (minuteReveil >= -60)){
-    heureReveil -= 1;
-    minuteReveil = 60 - minuteReveil;
+    enleveHeure(&heureReveil, &minuteReveil);
   }
   
       Serial.print("Heure du reveil : ");
@@ -91,12 +126,10 @@ if ((minuteReveil > 59) && (minuteReveil < 120)){
       Serial.println(minuteReveil);
       
   if ((minuteCoucher > 59) && (minuteCoucher < 120)){
-    heureCoucher += 1;
-    minuteCoucher = minuteCoucher - 60;
+     ajouteHeure(&heureCoucher, &minuteCoucher);
   }
   else if ((minuteCoucher < 0)&& (minuteCoucher >= -60)){
-    heureCoucher -= 1;
-    minuteCoucher = 60 - minuteCoucher;
+     enleveHeure(&heureCoucher, &minuteCoucher);
   }
 
       Serial.print("heure du Coucher : ");
