@@ -5,16 +5,26 @@
  * http://paulorenato.com/joomla/index.php?option=com_content&view=article&id=125&Itemid=4
  */
 
+/* choose your rtc chipset, either DS1307 or PCF8563 */
+//#define USE_DS1307
+#define USE_PCF8563
+
 /******************* CONSTANTS AND VARIABLES *******************
 ****************************************************************/
 #include <TimeLib.h>  
 #include <TimeLord.h>
 #include <Wire.h>       // Needed for I2C communication
-#include <DS1307RTC.h>  // a basic DS1307 library that returns time as a time_t
-DS1307RTC  rtc;                // Init the DS3231 using the hardware interface
-//#include <Rtc_Pcf8563.h>
-//Rtc_Pcf8563 rtc;
-time_t  t;   
+
+#ifdef USE_DS1307
+  #include <DS1307RTC.h>  // a basic DS1307 library that returns time as a time_t
+  DS1307RTC  rtc;         // Init the DS3231 using the hardware interface
+#endif
+
+#ifdef USE_PCF8563
+  #include <Rtc_Pcf8563.h>
+  Rtc_Pcf8563 rtc;
+#endif
+   
 
 const int TIMEZONE = -5; //PST
 const float LATITUDE = 45.50, LONGITUDE = -73.56; // set your position here
@@ -48,18 +58,9 @@ void setup()  {
   myLord.DstRules(3,2,11,1,60); // DST Rules for USA
 }
 
-/*
-void getDateAndTimeDS3231(){
-  t = rtc.get();
-  yr = t.year-2000;
-  mt = t.mon;
-  dy = t.date;
-  hr = t.hour;
-  mn = t.min;
-}
-*/
-
-void getDateAndTimeDS1307RTC(){
+#ifdef USE_DS1307
+void getDateAndTime(){
+  time_t  t;
   t = rtc.get();
   yr = year(t)-2000;
   mt = month(t);
@@ -67,9 +68,10 @@ void getDateAndTimeDS1307RTC(){
   hr = hour(t);
   mn = minute(t);
 }
+#endif
 
-/*
-void getDateAndTimePcf8563(){
+#ifdef USE_PCF8563
+void getDateAndTime(){
   String date = rtc.formatDate(RTCC_DATE_ASIA);
   yr = date.substring(0,4).toInt();
   mt = date.substring(5,7).toInt();
@@ -79,10 +81,9 @@ void getDateAndTimePcf8563(){
   String time = rtc.formatTime();
   hr = time.substring(0,2).toInt();
   mn = time.substring(3,5).toInt();
-  //Serial.println(time);
-
 }
-*/
+#endif
+
 void ajouteHeure(int * const heure, int * const minut){
     *heure += 1;
     *minut = 60 - *minut;
@@ -97,9 +98,7 @@ void enleveHeure(int * const heure, int * const minut){
 /******************** MAIN LOOP STARTS HERE  *******************
 ****************************************************************/
 void loop(){
-  //getDateAndTimeDS3231();
-  //getDateAndTimePcf8563();
-  getDateAndTimeDS1307RTC();
+  getDateAndTime();
   
   sunTime[3] = dy; // Uses the Time library to give Timelord the current date
   sunTime[4] = mt;
