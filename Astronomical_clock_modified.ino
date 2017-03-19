@@ -7,7 +7,8 @@
 
 /* choose your rtc chipset, either DS1307 or PCF8563 */
 //#define USE_DS1307
-#define USE_PCF8563
+//#define USE_PCF8563
+#define USE_DS3231
 
 /******************* CONSTANTS AND VARIABLES *******************
 ****************************************************************/
@@ -24,7 +25,11 @@
   #include <Rtc_Pcf8563.h>
   Rtc_Pcf8563 rtc;
 #endif
-   
+
+#ifdef USE_DS3231
+  #include <DS3231.h>  // a basic DS1307 library that returns time as a time_t
+  DS3231  rtc(SDA, SCL);                // Init the DS3231 using the hardware interface
+#endif
 
 const int TIMEZONE = -5; //PST
 const float LATITUDE = 45.50, LONGITUDE = -73.56; // set your position here
@@ -51,7 +56,6 @@ int minuteCoucher;
 ****************************************************************/
 void setup()  {
   Serial.begin(9600);
-  // rtc.begin();
     /* TimeLord Object Initialization */
   myLord.TimeZone(TIMEZONE * 60);
   myLord.Position(LATITUDE, LONGITUDE);
@@ -68,8 +72,21 @@ void getDateAndTime(){
   hr = hour(t);
   mn = minute(t);
 }
+#endif 
+
+#ifdef USE_DS3231
+void getDateAndTime(){
+  time_t  t;
+  t = rtc.getTime();
+  yr = year(t)-2000;
+  mt = month(t);
+  dy = day(t);
+  hr = hour(t);
+  mn = minute(t);
+}
 #endif
 
+  // rtc.begin();
 #ifdef USE_PCF8563
 void getDateAndTime(){
   String date = rtc.formatDate(RTCC_DATE_ASIA);
@@ -180,4 +197,3 @@ void DisplaySunSet(uint8_t * when)
       Serial.print(":");
       Serial.println(MSS);
 }
-
