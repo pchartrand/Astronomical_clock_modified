@@ -38,11 +38,7 @@ const int TIMEZONE = -5; //PST
 const float LATITUDE = 45.50, LONGITUDE = -73.56; // set your position here
 
 TimeLord myLord; // TimeLord Object, Global variable
-byte sunTime[]  = {0, 0, 0, 30, 12, 16}; // 17 Oct 2013 // POURQUOI ?
-int mSunrise, mSunset; //sunrise and sunset expressed as minute of day (0-1439)
-// Need to adapt this according to the actual physical connections:
-
-byte yr;byte mt; byte dy; byte hr; byte mn;
+byte sunTime[]  = {0, 0, 0, 0, 0, 0}; 
 
 int HSR; //hour of sunrise
 int MSR; //minute of sunrise
@@ -123,9 +119,8 @@ void loop(){
   sunTime[3] = dy; // Uses the Time library to give Timelord the current date
   sunTime[4] = mt;
   sunTime[5] = yr;
-  
   myLord.SunRise(sunTime); // Computes Sun Rise. Prints:
-  mSunrise = sunTime[2] * 60 + sunTime[1];
+  myLord.DST(sunTime);
   DisplaySunRise(sunTime);
   
   /* Sunset: */
@@ -133,7 +128,7 @@ void loop(){
   sunTime[4] = mt;
   sunTime[5] = yr;
   myLord.SunSet(sunTime); // Computes Sun Set. Prints:
-  mSunset = sunTime[2] * 60 + sunTime[1];
+  myLord.DST(sunTime);
   DisplaySunSet(sunTime);
 
 //assignation de l'heure du réveil et du coucher
