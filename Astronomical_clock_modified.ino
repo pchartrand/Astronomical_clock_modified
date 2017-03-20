@@ -100,21 +100,12 @@ void getDateAndTime(){
 }
 #endif
 
-void ajouteHeure(int * const heure, int * const minut){
-    *heure += 1;
-    *minut = 60 - *minut;
-}
 
-void enleveHeure(int * const heure, int * const minut){
-    *heure -= 1;
-    *minut += 60;
-}
 
 
 /******************** MAIN LOOP STARTS HERE  *******************
 ****************************************************************/
 void loop(){
-  getDateAndTime();
   
   sunTime[3] = dy; // Uses the Time library to give Timelord the current date
   sunTime[4] = mt;
@@ -124,44 +115,20 @@ void loop(){
   DisplaySunRise(sunTime);
   
   /* Sunset: */
-  sunTime[3] = dy; // Uses the Time library to give Timelord the current date
-  sunTime[4] = mt;
-  sunTime[5] = yr;
   myLord.SunSet(sunTime); // Computes Sun Set. Prints:
   myLord.DST(sunTime);
   DisplaySunSet(sunTime);
 
+  getDateAndTime();
+  
 //assignation de l'heure du réveil et du coucher
   heureReveil = HSR;
   minuteReveil = MSR + SRmod;
+  decimalToTime(&heureReveil, &minuteReveil);
   heureCoucher = HSS;
   minuteCoucher = MSS + SSmod;
+  decimalToTime(&heureCoucher, &minuteCoucher);
   
-//Convertir décimales en hr
-  if ((minuteReveil > 59) && (minuteReveil < 120)){
-    ajouteHeure(&heureReveil, &minuteReveil);
-  }
-  else if ((minuteReveil < 0) && (minuteReveil >= -60)){
-    enleveHeure(&heureReveil, &minuteReveil);
-  }
-  
-      Serial.print("Heure du reveil : ");
-      Serial.print(heureReveil);
-      Serial.print(":");
-      Serial.println(minuteReveil);
-      
-  if ((minuteCoucher > 59) && (minuteCoucher < 120)){
-     ajouteHeure(&heureCoucher, &minuteCoucher);
-  }
-  else if ((minuteCoucher < 0)&& (minuteCoucher >= -60)){
-     enleveHeure(&heureCoucher, &minuteCoucher);
-  }
-
-      Serial.print("heure du Coucher : ");
-      Serial.print(heureCoucher);
-      Serial.print(":");
-      Serial.println(minuteCoucher);
-
 //Exécution du programme
 if (((hr == heureReveil)  && (mn >= minuteReveil))||((hr > heureReveil) && (hr < heureCoucher))||((hr == heureCoucher)  && (mn < minuteCoucher))){
     //insérer programme d'ouverture
@@ -177,7 +144,22 @@ Serial.println("");
 delay(1000);
 
 }
-       
+
+void decimalToTime(int * const heure, int * const minut){
+  if ((*minut > 59) && (*minut < 120)){
+    *heure += 1;
+    *minut = *minut - 60;
+  }
+  else if ((*minut < 0)&& (minuteReveil >= -60)){
+    *heure -= 1;
+    *minut = 60 - *minut;
+  }
+  printDigits(*heure);
+  Serial.print(*heure);
+  Serial.print(":");
+  printDigits(*minut);
+  Serial.println(*minut); 
+}
        
 void DisplaySunRise(uint8_t * when)
 {      HSR = when[2];
