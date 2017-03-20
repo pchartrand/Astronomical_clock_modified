@@ -114,6 +114,46 @@ void enleveHeure(int * const heure, int * const minut){
     *minut += 60;
 }
 
+void imprimeHeureReveil(){
+    Serial.print(F("Heure du reveil : "));
+    Serial.print(heureReveil);
+    Serial.print(":");
+    Serial.println(minuteReveil);
+}
+
+void imprimeHeureCoucher(){
+    Serial.print(F("heure du Coucher : "));
+    Serial.print(heureCoucher);
+    Serial.print(":");
+    Serial.println(minuteCoucher);
+}
+
+void DisplaySunRise(uint8_t * when){   
+    HSR = when[2];
+    MSR = when[1];
+    Serial.print("Lever du soleil : ");
+    Serial.print(HSR);
+    Serial.print(":");
+    Serial.println(MSR);
+}
+
+void DisplaySunSet(uint8_t * when){     
+    HSS = when[2];
+    MSS = when[1];
+    Serial.print("Coucher du soleil : ");
+    Serial.print(HSS);
+    Serial.print(":");
+    Serial.println(MSS);
+}
+
+void programmeDOuverture(){
+    Serial.println("Mode : jour");
+}
+
+void programmeDeFermeture(){
+    Serial.println("Mode : nuit");
+    //insérer programme de fermeture
+}
 
 /******************** MAIN LOOP STARTS HERE  *******************
 ****************************************************************/
@@ -150,10 +190,7 @@ void loop(){
     enleveHeure(&heureReveil, &minuteReveil);
   }
   
-      Serial.print("Heure du reveil : ");
-      Serial.print(heureReveil);
-      Serial.print(":");
-      Serial.println(minuteReveil);
+  imprimeHeureReveil();
       
   if ((minuteCoucher > 59) && (minuteCoucher < 120)){
      ajouteHeure(&heureCoucher, &minuteCoucher);
@@ -162,19 +199,14 @@ void loop(){
      enleveHeure(&heureCoucher, &minuteCoucher);
   }
 
-      Serial.print("heure du Coucher : ");
-      Serial.print(heureCoucher);
-      Serial.print(":");
-      Serial.println(minuteCoucher);
+  imprimeHeureCoucher();
 
 //Exécution du programme
 if (((hr == heureReveil)  && (mn >= minuteReveil))||((hr > heureReveil) && (hr < heureCoucher))||((hr == heureCoucher)  && (mn < minuteCoucher))){
-    //insérer programme d'ouverture
-    Serial.println("Mode : jour");
+    programmeDOuverture();
   }
   else if (((hr == heureCoucher)  && (mn >= heureCoucher))||(hr > heureCoucher)||(hr < heureReveil)||((hr == heureReveil)  && (mn < minuteReveil))){
-    //insérer programme de fermeture
-    Serial.println("Mode : nuit");
+    programmeDeFermeture();
   }
 
 
@@ -184,20 +216,5 @@ delay(1000);
 }
        
        
-void DisplaySunRise(uint8_t * when)
-{      HSR = when[2];
-      MSR = when[1];
-      Serial.print("Lever du soleil : ");
-      Serial.print(HSR);
-      Serial.print(":");
-      Serial.println(MSR);
-}
-void DisplaySunSet(uint8_t * when)
-{     HSS = when[2];
-      MSS = when[1];
-      Serial.print("Coucher du soleil : ");
-      Serial.print(HSS);
-      Serial.print(":");
-      Serial.println(MSS);
-}
+
 
