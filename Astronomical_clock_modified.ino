@@ -7,7 +7,8 @@
 
 /* choose your rtc chipset, either DS1307 or PCF8563 */
 //#define USE_DS1307
-#define USE_PCF8563
+//#define USE_PCF8563
+#define USE_DS3231
 
 /******************* CONSTANTS AND VARIABLES *******************
 ****************************************************************/
@@ -15,16 +16,23 @@
 #include <TimeLord.h>
 #include <Wire.h>       // Needed for I2C communication
 
+// https://github.com/PaulStoffregen/DS1307RTC.git
 #ifdef USE_DS1307
   #include <DS1307RTC.h>  // a basic DS1307 library that returns time as a time_t
   DS1307RTC  rtc;         // Init the DS3231 using the hardware interface
 #endif
 
+// http://www.rinkydinkelectronics.com/library.php?id=73
+#ifdef USE_DS3231
+  #include <DS3231.h>
+  DS3231  rtc(SDA, SCL);
+#endif
+   
+// https://bitbucket.org/orbitalair/arduino_rtc_pcf8563/get/1fd3fcfc7941.zip
 #ifdef USE_PCF8563
   #include <Rtc_Pcf8563.h>
   Rtc_Pcf8563 rtc;
 #endif
-   
 
 const int TIMEZONE = -5; //PST
 const float LATITUDE = 45.50, LONGITUDE = -73.56; // set your position here
@@ -67,6 +75,18 @@ void getDateAndTime(){
   dy = day(t);
   hr = hour(t);
   mn = minute(t);
+}
+#endif
+
+#ifdef USE_DS3231
+void getDateAndTime(){
+  Time  t;
+  t = rtc.getTime();
+  yr = t.year-2000;
+  mt = t.mon;
+  dy = t.date;
+  hr = t.hour;
+  mn = t.min;
 }
 #endif
 
