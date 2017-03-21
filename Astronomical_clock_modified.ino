@@ -165,6 +165,11 @@ void decimalToTime(int * const heure, int * const minut){
   Serial.println(*minut); 
 }
 
+void printDigits(int digits){
+  // utility function for digital clock display: prints preceding colon and leading 0
+  if(digits < 10)
+  Serial.print('0');
+}
 
 /******************** MAIN LOOP STARTS HERE  *******************
 ****************************************************************/
