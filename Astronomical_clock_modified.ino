@@ -5,7 +5,7 @@
  * http://paulorenato.com/joomla/index.php?option=com_content&view=article&id=125&Itemid=4
  */
 
-/* choose your rtc chipset, either DS1307 or PCF8563 */
+/* choose your rtc chipset, either DS1307, DS3231 or PCF8563 */
 //#define USE_DS1307
 //#define USE_PCF8563
 #define USE_DS3231
@@ -38,7 +38,9 @@ const int TIMEZONE = -5; //PST
 const float LATITUDE = 45.50, LONGITUDE = -73.56; // set your position here
 
 TimeLord myLord; // TimeLord Object, Global variable
-byte sunTime[]  = {0, 0, 0, 0, 0, 0}; 
+byte hr; byte mn; byte yr; byte dy; byte mt;
+byte sunTime[]  = {0, 0, 0, 0, 0, 0};
+
 
 int HSR; //hour of sunrise
 int MSR; //minute of sunrise
@@ -151,25 +153,34 @@ void programmeDeFermeture(){
     //insérer programme de fermeture
 }
 
+void setSunTime(){
+  sunTime[3] = dy; // Uses the Time library to give Timelord the current date
+  sunTime[4] = mt;
+  sunTime[5] = yr;
+}
+
+void setAndDisplaySunrise(){
+  setSunTime();
+  myLord.SunRise(sunTime); // Computes Sun Rise. Prints:
+  myLord.DST(sunTime);
+  DisplaySunRise(sunTime);
+}
+
+void setAndDisplaySunset(){
+  setSunTime();
+  myLord.SunSet(sunTime); // Computes Sun Set. Prints:
+  myLord.DST(sunTime);
+  DisplaySunSet(sunTime);
+}
+
 /******************** MAIN LOOP STARTS HERE  *******************
 ****************************************************************/
 void loop(){
   getDateAndTime();
   
-  sunTime[3] = dy; // Uses the Time library to give Timelord the current date
-  sunTime[4] = mt;
-  sunTime[5] = yr;
-  myLord.SunRise(sunTime); // Computes Sun Rise. Prints:
-  myLord.DST(sunTime);
-  DisplaySunRise(sunTime);
+  setAndDisplaySunrise();
   
-  /* Sunset: */
-  sunTime[3] = dy; // Uses the Time library to give Timelord the current date
-  sunTime[4] = mt;
-  sunTime[5] = yr;
-  myLord.SunSet(sunTime); // Computes Sun Set. Prints:
-  myLord.DST(sunTime);
-  DisplaySunSet(sunTime);
+  setAndDisplaySunset();
 
 //assignation de l'heure du réveil et du coucher
   heureReveil = HSR;
@@ -203,7 +214,6 @@ if (((hr == heureReveil)  && (mn >= minuteReveil))||((hr > heureReveil) && (hr <
   else if (((hr == heureCoucher)  && (mn >= heureCoucher))||(hr > heureCoucher)||(hr < heureReveil)||((hr == heureReveil)  && (mn < minuteReveil))){
     programmeDeFermeture();
   }
-
 
 Serial.println("");
 delay(1000);
