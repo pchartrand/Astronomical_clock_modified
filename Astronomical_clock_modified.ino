@@ -102,30 +102,6 @@ void getDateAndTime(){
 }
 #endif
 
-void ajouteHeure(int * const heure, int * const minut){
-    *heure += 1;
-    *minut = 60 - *minut;
-}
-
-void enleveHeure(int * const heure, int * const minut){
-    *heure -= 1;
-    *minut += 60;
-}
-
-void imprimeHeureReveil(){
-    Serial.print(F("Heure du reveil : "));
-    Serial.print(heureReveil);
-    Serial.print(":");
-    Serial.println(minuteReveil);
-}
-
-void imprimeHeureCoucher(){
-    Serial.print(F("heure du Coucher : "));
-    Serial.print(heureCoucher);
-    Serial.print(":");
-    Serial.println(minuteCoucher);
-}
-
 void DisplaySunRise(uint8_t * when){   
     HSR = when[2];
     MSR = when[1];
@@ -173,6 +149,23 @@ void setAndDisplaySunset(){
   DisplaySunSet(sunTime);
 }
 
+void decimalToTime(int * const heure, int * const minut){
+  if ((*minut > 59) && (*minut < 120)){
+    *heure += 1;
+    *minut = *minut - 60;
+  }
+  else if ((*minut < 0)&& (minuteReveil >= -60)){
+    *heure -= 1;
+    *minut = 60 - *minut;
+  }
+  //printDigits(*heure);
+  Serial.print(*heure);
+  Serial.print(":");
+  //printDigits(*minut);
+  Serial.println(*minut); 
+}
+
+
 /******************** MAIN LOOP STARTS HERE  *******************
 ****************************************************************/
 void loop(){
@@ -185,27 +178,11 @@ void loop(){
 //assignation de l'heure du réveil et du coucher
   heureReveil = HSR;
   minuteReveil = MSR + SRmod;
+  decimalToTime(&heureReveil, &minuteReveil);
+
   heureCoucher = HSS;
   minuteCoucher = MSS + SSmod;
-  
-//Convertir décimales en hr
-  if ((minuteReveil > 59) && (minuteReveil < 120)){
-    ajouteHeure(&heureReveil, &minuteReveil);
-  }
-  else if ((minuteReveil < 0) && (minuteReveil >= -60)){
-    enleveHeure(&heureReveil, &minuteReveil);
-  }
-  
-  imprimeHeureReveil();
-      
-  if ((minuteCoucher > 59) && (minuteCoucher < 120)){
-     ajouteHeure(&heureCoucher, &minuteCoucher);
-  }
-  else if ((minuteCoucher < 0)&& (minuteCoucher >= -60)){
-     enleveHeure(&heureCoucher, &minuteCoucher);
-  }
-
-  imprimeHeureCoucher();
+  decimalToTime(&heureCoucher, &minuteCoucher);
 
 //Exécution du programme
 if (((hr == heureReveil)  && (mn >= minuteReveil))||((hr > heureReveil) && (hr < heureCoucher))||((hr == heureCoucher)  && (mn < minuteCoucher))){
@@ -219,7 +196,3 @@ Serial.println("");
 delay(1000);
 
 }
-       
-       
-
-
