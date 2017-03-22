@@ -158,10 +158,10 @@ void decimalToTime(int * const heure, int * const minut){
     *heure -= 1;
     *minut = 60 - *minut;
   }
-  //printDigits(*heure);
+  printDigits(*heure);
   Serial.print(*heure);
   Serial.print(":");
-  //printDigits(*minut);
+  printDigits(*minut);
   Serial.println(*minut); 
 }
 
