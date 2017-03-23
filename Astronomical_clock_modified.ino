@@ -7,8 +7,8 @@
 
 /* choose your rtc chipset, either DS1307, DS3231 or PCF8563 */
 //#define USE_DS1307
-//#define USE_PCF8563
-#define USE_DS3231
+#define USE_PCF8563
+//#define USE_DS3231
 
 /******************* CONSTANTS AND VARIABLES *******************
 ****************************************************************/
@@ -34,13 +34,14 @@
   Rtc_Pcf8563 rtc;
 #endif
 
-const int TIMEZONE = -5; //PST
+const int SLEEP_SECONDS = 5;
+
+const int TIMEZONE = -5; // EST
 const float LATITUDE = 45.50, LONGITUDE = -73.56; // set your position here
 
 TimeLord myLord; // TimeLord Object, Global variable
-byte hr; byte mn; byte yr; byte dy; byte mt;
-byte sunTime[]  = {0, 0, 0, 0, 0, 0};
-
+byte yr, dy, mt, hr, mn, sc; // date and time split in parts
+byte sunTime[]  = {0, 0, 0, 0, 0, 0}; // array used to set sunrise and sunset times
 
 int HSR; //hour of sunrise
 int MSR; //minute of sunrise
@@ -48,10 +49,10 @@ int HSS; //hour of sunset
 int MSS; //minute of sunset
 int SRmod = 15; //Décalage en minute par rapport à l'heure du lever de soleil (ouverture) : entree -60 et 60 (mn)
 int SSmod = 20; //Décalage en minute par rapport à l'heure du coucher de soleil (fermeture)
-int heureReveil; // heure d'ouverture de la porte
-int minuteReveil; //minute d'ouverture de la porte
-int heureCoucher;
-int minuteCoucher;
+int heureReveil;  // heure d'ouverture de la porte
+int minuteReveil; // minute d'ouverture de la porte
+int heureCoucher; // heure de fermeture de la porte
+int minuteCoucher;// minute de fermerture de la porte
 
 /************************ ARDUINO SETUP  ***********************
 ****************************************************************/
@@ -62,6 +63,20 @@ void setup()  {
   myLord.TimeZone(TIMEZONE * 60);
   myLord.Position(LATITUDE, LONGITUDE);
   myLord.DstRules(3,2,11,1,60); // DST Rules for USA
+
+  getDateAndTime();
+
+  setAndDisplaySunrise();
+  setAndDisplaySunset();
+  
+  //assignation de l'heure du réveil et du coucher
+  heureReveil = HSR;
+  minuteReveil = MSR + SRmod;
+  carryOverMinutes(&heureReveil, &minuteReveil);
+
+  heureCoucher = HSS;
+  minuteCoucher = MSS + SSmod;
+  carryOverMinutes(&heureCoucher, &minuteCoucher);
 }
 
 #ifdef USE_DS1307
@@ -73,6 +88,7 @@ void getDateAndTime(){
   dy = day(t);
   hr = hour(t);
   mn = minute(t);
+  sc = second(t);
 }
 #endif
 
@@ -85,6 +101,7 @@ void getDateAndTime(){
   dy = t.date;
   hr = t.hour;
   mn = t.min;
+  sc = t.sec;
 }
 #endif
 
@@ -99,6 +116,7 @@ void getDateAndTime(){
   String time = rtc.formatTime();
   hr = time.substring(0,2).toInt();
   mn = time.substring(3,5).toInt();
+  sc = time.substring(6,8).toInt();
 }
 #endif
 
@@ -120,11 +138,12 @@ void DisplaySunSet(uint8_t * when){
     Serial.println(MSS);
 }
 
-void programmeDOuverture(){
+void openingProgram(){
     Serial.println("Mode : jour");
+    //insérer programme de d'ouverture
 }
 
-void programmeDeFermeture(){
+void closingProgram(){
     Serial.println("Mode : nuit");
     //insérer programme de fermeture
 }
@@ -149,7 +168,7 @@ void setAndDisplaySunset(){
   DisplaySunSet(sunTime);
 }
 
-void decimalToTime(int * const heure, int * const minut){
+void carryOverMinutes(int * const heure, int * const minut){
   if ((*minut > 59) && (*minut < 120)){
     *heure += 1;
     *minut = *minut - 60;
@@ -158,46 +177,66 @@ void decimalToTime(int * const heure, int * const minut){
     *heure -= 1;
     *minut = 60 - *minut;
   }
-  printDigits(*heure);
+  printLeadingZero(*heure);
   Serial.print(*heure);
   Serial.print(":");
-  printDigits(*minut);
+  printLeadingZero(*minut);
   Serial.println(*minut); 
 }
 
-void printDigits(int digits){
-  // utility function for digital clock display: prints preceding colon and leading 0
+void printLeadingZero(int digits){
+  // utility function for digital clock display: prints leading 0
   if(digits < 10)
-  Serial.print('0');
+    Serial.print('0');
+}
+
+boolean timeToOpen(byte hr, byte mn){
+  return (
+      ((hr == heureReveil)  && (mn >= minuteReveil))
+    ||((hr > heureReveil) && (hr < heureCoucher))
+    ||((hr == heureCoucher)  && (mn < minuteCoucher))
+    );
+}
+
+boolean timeToClose(byte hr, byte mn){
+  return (
+      ((hr == heureCoucher) && (mn >= heureCoucher))
+    ||((hr > heureCoucher) || (hr < heureReveil))
+    ||((hr == heureReveil)  && (mn < minuteReveil))
+    );
+}
+
+void printDateTime(){
+  Serial.println("");
+  Serial.print(2000 + yr);
+  Serial.print('-');
+  Serial.print(mt);
+  Serial.print('-');
+  Serial.print(dy);
+  Serial.print(' ');
+  Serial.print(hr);
+  Serial.print(':');
+  Serial.print(mn);
+  Serial.print(':');
+  Serial.println(sc);
 }
 
 /******************** MAIN LOOP STARTS HERE  *******************
 ****************************************************************/
 void loop(){
   getDateAndTime();
+  printDateTime();
   
   setAndDisplaySunrise();
-  
   setAndDisplaySunset();
 
-//assignation de l'heure du réveil et du coucher
-  heureReveil = HSR;
-  minuteReveil = MSR + SRmod;
-  decimalToTime(&heureReveil, &minuteReveil);
-
-  heureCoucher = HSS;
-  minuteCoucher = MSS + SSmod;
-  decimalToTime(&heureCoucher, &minuteCoucher);
-
-//Exécution du programme
-if (((hr == heureReveil)  && (mn >= minuteReveil))||((hr > heureReveil) && (hr < heureCoucher))||((hr == heureCoucher)  && (mn < minuteCoucher))){
-    programmeDOuverture();
+  //Exécution du programme
+  if (timeToOpen(hr, mn)){
+      openingProgram();
+  }else if (timeToClose(hr, mn)){
+    closingProgram();
   }
-  else if (((hr == heureCoucher)  && (mn >= heureCoucher))||(hr > heureCoucher)||(hr < heureReveil)||((hr == heureReveil)  && (mn < minuteReveil))){
-    programmeDeFermeture();
-  }
-
-Serial.println("");
-delay(1000);
+  
+  delay(SLEEP_SECONDS * 1000);
 
 }
