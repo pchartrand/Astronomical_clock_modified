@@ -120,22 +120,28 @@ void getDateAndTime(){
 }
 #endif
 
+void printHourMinutes(int heures, int minutes){
+    if(heures <10)
+      Serial.print('0');
+    Serial.print(heures);
+    Serial.print(":");
+    if(minutes <10)
+      Serial.print('0');
+    Serial.println(minutes);
+}
+
 void DisplaySunRise(uint8_t * when){   
     HSR = when[2];
     MSR = when[1];
     Serial.print("Lever du soleil : ");
-    Serial.print(HSR);
-    Serial.print(":");
-    Serial.println(MSR);
+    printHourMinutes(HSR, MSR);
 }
 
 void DisplaySunSet(uint8_t * when){     
     HSS = when[2];
     MSS = when[1];
     Serial.print("Coucher du soleil : ");
-    Serial.print(HSS);
-    Serial.print(":");
-    Serial.println(MSS);
+    printHourMinutes(HSS, MSS);
 }
 
 void openingProgram(){
@@ -177,17 +183,8 @@ void carryOverMinutes(int * const heure, int * const minut){
     *heure -= 1;
     *minut = 60 - *minut;
   }
-  printLeadingZero(*heure);
-  Serial.print(*heure);
-  Serial.print(":");
-  printLeadingZero(*minut);
-  Serial.println(*minut); 
-}
-
-void printLeadingZero(int digits){
-  // utility function for digital clock display: prints leading 0
-  if(digits < 10)
-    Serial.print('0');
+  printHourMinutes(*heure, *minut);
+  
 }
 
 boolean timeToOpen(byte hr, byte mn){
