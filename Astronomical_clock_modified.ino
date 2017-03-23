@@ -54,31 +54,6 @@ int minuteReveil; // minute d'ouverture de la porte
 int heureCoucher; // heure de fermeture de la porte
 int minuteCoucher;// minute de fermerture de la porte
 
-/************************ ARDUINO SETUP  ***********************
-****************************************************************/
-void setup()  {
-  Serial.begin(9600);
-  // rtc.begin();
-    /* TimeLord Object Initialization */
-  myLord.TimeZone(TIMEZONE * 60);
-  myLord.Position(LATITUDE, LONGITUDE);
-  myLord.DstRules(3,2,11,1,60); // DST Rules for USA
-
-  getDateAndTime();
-
-  setAndDisplaySunrise();
-  setAndDisplaySunset();
-  
-  //assignation de l'heure du réveil et du coucher
-  heureReveil = HSR;
-  minuteReveil = MSR + SRmod;
-  carryOverMinutes(&heureReveil, &minuteReveil);
-
-  heureCoucher = HSS;
-  minuteCoucher = MSS + SSmod;
-  carryOverMinutes(&heureCoucher, &minuteCoucher);
-}
-
 #ifdef USE_DS1307
 void getDateAndTime(){
   time_t  t;
@@ -216,6 +191,30 @@ void printDateTime(){
   Serial.print(mn);
   Serial.print(':');
   Serial.println(sc);
+}
+/************************ ARDUINO SETUP  ***********************
+****************************************************************/
+void setup()  {
+  Serial.begin(9600);
+  // rtc.begin();
+    /* TimeLord Object Initialization */
+  myLord.TimeZone(TIMEZONE * 60);
+  myLord.Position(LATITUDE, LONGITUDE);
+  myLord.DstRules(3,2,11,1,60); // DST Rules for USA
+
+  getDateAndTime();
+
+  setAndDisplaySunrise();
+  setAndDisplaySunset();
+  
+  //assignation de l'heure du réveil et du coucher
+  heureReveil = HSR;
+  minuteReveil = MSR + SRmod;
+  carryOverMinutes(&heureReveil, &minuteReveil);
+
+  heureCoucher = HSS;
+  minuteCoucher = MSS + SSmod;
+  carryOverMinutes(&heureCoucher, &minuteCoucher);
 }
 
 /******************** MAIN LOOP STARTS HERE  *******************
